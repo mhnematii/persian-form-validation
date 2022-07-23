@@ -19,7 +19,7 @@ class Validator {
             if (requiredInputs) {
                 requiredInputs.forEach(input => {
                     const elementHaveRegex = input.hasAttribute("pattern");
-                    if (options.regex == true) {
+                    if (options != undefined && options.regex == true) {
                         if (elementHaveRegex) {
                             input.addEventListener("change", this.regexValidator);
                         }
@@ -45,13 +45,20 @@ class Validator {
             return element.tagName == "INPUT" && element.hasAttribute("required");
         });
         arrayOfInput.forEach((input) => {
+            const elementHaveRegex = input.hasAttribute("pattern");
             let spanError = document.getElementById(`${input.id}Error`);
             if (input.value == "") {
                 let [label] = input.labels;
                 e.preventDefault();
                 spanError.innerHTML = `عنوان ${label.textContent} الزامی میباشد.`;
             } else {
-                spanError.innerHTML = ""
+                spanError.innerHTML = "";
+                if (elementHaveRegex) {
+                    let regexStatus = this.regexInputOnChange(input);
+                    if (!regexStatus) {
+                        e.preventDefault();
+                    }
+                }
             }
         });
     }
@@ -66,16 +73,25 @@ class Validator {
         }
     }
 
-    regexValidator = (e) => {
-        let targetInput = e.target;
-        let pattern = targetInput.pattern;
-        let spanError = document.getElementById(`${targetInput.id}Error`);
+    regexInputOnChange = (input) => {
+        let pattern = input.pattern;
+        let spanError = document.getElementById(`${input.id}Error`);
         let exp = new RegExp(pattern);
-        let regexResult = exp.test(e.target.value);
+        let regexResult = exp.test(input.value);
         if (!regexResult) {
-            spanError.innerHTML = ` فرمت عنوان ${targetInput.labels[0].textContent} نادرست میباشد.`;
+            if (input.value == "") {
+                spanError.innerHTML = ` عنوان ${input.labels[0].textContent} الزامی میباشد.`;
+            } else {
+                spanError.innerHTML = ` فرمت ${input.labels[0].textContent} نادرست میباشد.`;
+            }
         } else {
             spanError.innerHTML = "";
         }
+        return regexResult;
+    }
+
+    regexValidator = (e) => {
+        let targetInput = e.target;
+        this.regexInputOnChange(targetInput);
     }
 }
